@@ -4,8 +4,7 @@ import { NextResponse } from "next/server";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
 async function generateSummary(title, body) {
@@ -58,7 +57,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = 6;
+    const limit = parseInt(searchParams.get("limit") || "6");
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 

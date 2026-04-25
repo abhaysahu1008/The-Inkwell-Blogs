@@ -4,8 +4,7 @@ import { NextResponse } from "next/server";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
 async function generateSummary(title, body) {
@@ -69,44 +68,52 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const { title, body, image_url, user_id, user_role } = await request.json();
-  const { data: post } = await supabase
-    .from("posts")
-    .select("author_id")
-    .eq("id", params.id)
-    .single();
-  if (!post)
-    return NextResponse.json({ error: "Post not found" }, { status: 404 });
-  if (user_role !== "admin" && post.author_id !== user_id)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  try {
+    const { title, body, image_url, user_id, user_role } = await request.json();
+    const { data: post } = await supabase
+      .from("posts")
+      .select("author_id")
+      .eq("id", params.id)
+      .single();
+    if (!post)
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    if (user_role !== "admin" && post.author_id !== user_id)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const summary = await generateSummary(title, body);
-  const { data, error } = await supabase
-    .from("posts")
-    .update({ title, body, image_url, summary })
-    .eq("id", params.id)
-    .select()
-    .single();
+    const summary = await generateSummary(title, body);
+    const { data, error } = await supabase
+      .from("posts")
+      .update({ title, body, image_url, summary })
+      .eq("id", params.id)
+      .select()
+      .single();
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ post: data });
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ post: data });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function DELETE(request, { params }) {
-  const { user_id, user_role } = await request.json();
-  const { data: post } = await supabase
-    .from("posts")
-    .select("author_id")
-    .eq("id", params.id)
-    .single();
-  if (!post)
-    return NextResponse.json({ error: "Post not found" }, { status: 404 });
-  if (user_role !== "admin" && post.author_id !== user_id)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  try {
+    const { user_id, user_role } = await request.json();
+    const { data: post } = await supabase
+      .from("posts")
+      .select("author_id")
+      .eq("id", params.id)
+      .single();
+    if (!post)
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    if (user_role !== "admin" && post.author_id !== user_id)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const { error } = await supabase.from("posts").delete().eq("id", params.id);
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+    const { error } = await supabase.from("posts").delete().eq("id", params.id);
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

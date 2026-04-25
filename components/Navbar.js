@@ -1,61 +1,65 @@
-﻿'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '../lib/supabase'
+﻿"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "../lib/supabase";
 
 export default function Navbar() {
-  const [user, setUser] = useState(null)
-  const [role, setRole] = useState(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
-        setUser(session.user)
+        setUser(session.user);
         const { data } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        if (data) setRole(data.role)
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+        if (data) setRole(data.role);
       }
-    }
-    getUser()
+    };
+    getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setUser(session.user)
-        const { data } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        if (data) setRole(data.role)
-      } else {
-        setUser(null)
-        setRole(null)
-      }
-    })
-    return () => listener.subscription.unsubscribe()
-  }, [])
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          const { data } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          if (data) setRole(data.role);
+        } else {
+          setUser(null);
+          setRole(null);
+        }
+      },
+    );
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
-    setLoggingOut(true)
-    setMenuOpen(false)
-    const { error } = await supabase.auth.signOut()
+    setLoggingOut(true);
+    setMenuOpen(false);
+    const { error } = await supabase.auth.signOut();
     if (!error) {
-      setUser(null)
-      setRole(null)
-      router.push('/')
-      router.refresh()
+      setUser(null);
+      setRole(null);
+      router.push("/");
+      router.refresh();
     }
-    setLoggingOut(false)
-  }
+    setLoggingOut(false);
+  };
 
   return (
     <nav className="navbar">
@@ -74,37 +78,47 @@ export default function Navbar() {
           <span></span>
         </button>
 
-        <ul className={`navbar-links${menuOpen ? ' open' : ''}`}>
+        <ul className={`navbar-links${menuOpen ? " open" : ""}`}>
           <li>
-            <Link href="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link href="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </Link>
           </li>
           {user ? (
             <>
-              {(role === 'author' || role === 'admin') && (
+              {(role === "author" || role === "admin") && (
                 <li>
                   <Link href="/create" onClick={() => setMenuOpen(false)}>
                     + New Post
                   </Link>
                 </li>
               )}
-              {role === 'admin' && (
+              {role === "admin" && (
                 <li>
-                  <Link href="/admin" onClick={() => setMenuOpen(false)}>Admin</Link>
+                  <Link href="/admin" onClick={() => setMenuOpen(false)}>
+                    Admin
+                  </Link>
                 </li>
               )}
               <li>
                 <button onClick={handleLogout} disabled={loggingOut}>
-                  {loggingOut ? 'Signing out...' : 'Sign Out'}
+                  {loggingOut ? "Signing out..." : "Sign Out"}
                 </button>
               </li>
             </>
           ) : (
             <>
               <li>
-                <Link href="/login" onClick={() => setMenuOpen(false)}>Sign In</Link>
+                <Link href="/login" onClick={() => setMenuOpen(false)}>
+                  Sign In
+                </Link>
               </li>
               <li>
-                <Link href="/register" className="btn-nav-cta" onClick={() => setMenuOpen(false)}>
+                <Link
+                  href="/register"
+                  className="btn-nav-cta"
+                  onClick={() => setMenuOpen(false)}
+                >
                   Get Started
                 </Link>
               </li>
@@ -113,5 +127,5 @@ export default function Navbar() {
         </ul>
       </div>
     </nav>
-  )
+  );
 }
